@@ -59,8 +59,8 @@ class ImapReceiver(val config: ImapConfig, val filter: List<ImapFilter>?) : Mess
         Logger.getGlobal().info("Connecting to target ${config.user}@${config.server}:${port}/${config.folder}")
         store = session.getStore("imaps") as IMAPStore
         store.connect(config.server, port, config.user, config.password)
-        val inboxTarget = getTargetFolderWithName(config.folder!!)
-        folders[config.folder!!] = inboxTarget
+        folders.clear()
+        folders[config.folder!!] = getTargetFolderWithName(config.folder!!)
     }
 
     override fun saveMessage(uid: Long, message: Message): Boolean {
@@ -77,18 +77,17 @@ class ImapReceiver(val config: ImapConfig, val filter: List<ImapFilter>?) : Mess
         val byteArrayOutputStream = ByteArrayOutputStream()
         message.writeTo(byteArrayOutputStream)
         val newMessage = MimeMessage(session, ByteArrayInputStream(byteArrayOutputStream.toByteArray()))
-        val inboxTarget = getTargetFolderForMessage(newMessage)
 
-        Logger.getGlobal().info("Writing \"${newMessage.subject}\" into folder \"${inboxTarget.name}\"")
+        Logger.getGlobal().info("Writing \"${newMessage.subject}\" into folder \"${getTargetFolderForMessage(newMessage).name}\"")
 
         try {
-            inboxTarget.appendMessages(arrayOf(newMessage))
+            getTargetFolderForMessage(newMessage).appendMessages(arrayOf(newMessage))
             return true
         } catch (e: FolderClosedException) {
             e.printStackTrace()
             connect()
             try {
-                inboxTarget.appendMessages(arrayOf(newMessage))
+                getTargetFolderForMessage(newMessage).appendMessages(arrayOf(newMessage))
                 return true
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -97,7 +96,7 @@ class ImapReceiver(val config: ImapConfig, val filter: List<ImapFilter>?) : Mess
             e.printStackTrace()
             connect()
             try {
-                inboxTarget.appendMessages(arrayOf(newMessage))
+                getTargetFolderForMessage(newMessage).appendMessages(arrayOf(newMessage))
                 return true
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -107,7 +106,7 @@ class ImapReceiver(val config: ImapConfig, val filter: List<ImapFilter>?) : Mess
             Thread.sleep(10 * 1000) // 10 Sekunden warten, dann erneut versuchen
             connect()
             try {
-                inboxTarget.appendMessages(arrayOf(newMessage))
+                getTargetFolderForMessage(newMessage).appendMessages(arrayOf(newMessage))
                 return true
             } catch (e: Exception) {
                 e.printStackTrace()
