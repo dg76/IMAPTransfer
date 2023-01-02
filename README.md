@@ -94,8 +94,9 @@ target:
   compress: true
 ```
 
-This will save the emails into separate files e.g. `myarchive/INBOX/55.eml` . Using `compress` the
-emails can be gzip-compressed and are saved e.g. into `55.eml.gz`.
+This will save the emails into separate files e.g. `myarchive/INBOX/55.eml` where the filename is the
+UID of the email and the suffix is "eml". Using `compress` the emails can be gzip-compressed and are
+saved e.g. into `55.eml.gz`.
 
 ### Restoring emails
 
