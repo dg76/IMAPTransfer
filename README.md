@@ -1,6 +1,8 @@
 # IMAPTransfer
 
-It can be used to copy, move and forward emails from one server to another.
+It can be used to copy, move and forward emails from one server to another. It can either
+run just once or it can stay connected to the IMAP server and copy/move/forward the emails immediately
+when they arrive.
 
 ### Configuration
 
