@@ -74,7 +74,7 @@ And if you don't want to keep a copy of the emails on the source server, just se
 `syncmode` can be `all`, `new` or `sincelastsync`:
 - `all` all past and future emails of the folder will be copied/moved
 - `new` all existing emails will be ignored and the folder will be watched for new emails, which will then be copied/moved/forwarded
-- `sincelastsync` reads the last sync position from the file "imap_uid.txt" (or as configured in the `uidfile` option) and start the sync from there. This way it can continue a sync when it was stopped.
+- `sincelastsync` reads the last sync position (i.e. the UID) from the file "imap_uid.txt" (or as configured in the `uidfile` setting of the `source`) and start the sync from there. This way it can continue a sync when it was stopped.
 
 `watch` makes the program stay connected to the IMAP server and watch for new emails. Otherwise, it would
 exit after it finishes processing the existing emails.
