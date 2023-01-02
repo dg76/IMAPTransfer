@@ -33,7 +33,7 @@ This example would copy all emails in the folder INBOX from server my1.mailserve
 
 ### Moving emails
 
-If you want to move all emails instead, just set `move: true` in the file above. Then the emails on the source server will be deleted after they have been moved.
+If you want to move all emails instead, just set `move: true` in the file above. Then the emails on the source server will be deleted after they have been copied.
 
 ### Forwarding emails
 
