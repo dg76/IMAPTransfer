@@ -122,13 +122,16 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
             } catch (e: FolderClosedException) {
                 e.printStackTrace()
                 connect()
+                syncExisting()
             } catch (e: IllegalStateException) {
                 e.printStackTrace()
                 connect()
+                syncExisting()
             } catch (e: IOException) {
                 e.printStackTrace()
                 Thread.sleep(10 * 1000) // 10 Sekunden warten, dann erneut versuchen
                 connect()
+                syncExisting()
             }
         }
     }
