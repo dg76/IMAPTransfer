@@ -66,11 +66,19 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
     private fun connectImapFolder() : IMAPFolder {
         val port = config.port ?: 993
 
-        Logger.getGlobal().info("Connecting to source ${config.user}@${config.server}:${port}/${config.folder}")
-        store = session.getStore("imaps") as IMAPStore
-        store.connect(config.server, port, config.user, config.password)
-        inbox = store.getFolder(config.folder) as IMAPFolder
-        inbox.open(if (move) Folder.READ_WRITE else Folder.READ_ONLY)
+        do {
+            try {
+                Logger.getGlobal().info("Connecting to source ${config.user}@${config.server}:${port}/${config.folder}")
+                store = session.getStore("imaps") as IMAPStore
+                store.connect(config.server, port, config.user, config.password)
+                inbox = store.getFolder(config.folder) as IMAPFolder
+                inbox.open(if (move) Folder.READ_WRITE else Folder.READ_ONLY)
+            } catch (e: Exception) {
+                Logger.getGlobal().severe("Connecting to source ${config.user}@${config.server}:${port}/${config.folder} failed: ${e.localizedMessage}")
+                Thread.sleep(5000)
+            }
+        } while(!inbox.isOpen)
+
         return inbox
     }
 
