@@ -5,10 +5,7 @@ import com.sun.mail.imap.IMAPStore
 import java.io.*
 import java.util.logging.Logger
 import java.util.zip.GZIPOutputStream
-import javax.mail.Folder
-import javax.mail.FolderClosedException
-import javax.mail.Message
-import javax.mail.Session
+import javax.mail.*
 import javax.mail.internet.MimeMessage
 
 /**
@@ -107,6 +104,19 @@ class ImapReceiver(val config: ImapConfig, val filter: List<ImapFilter>?) : Mess
             connect()
             try {
                 getTargetFolderForMessage(newMessage).appendMessages(arrayOf(newMessage))
+                return true
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } catch(e: MessagingException) {
+            e.printStackTrace()
+            connect()
+            val errorMessage = MimeMessage(session)
+            errorMessage.setFrom(config.user)
+            errorMessage.setSubject("IMAPTransfer error: ${e.localizedMessage} for message: ${newMessage.subject}")
+            errorMessage.setContent("An error ocurred when trying to copy a message.\nError: ${e.localizedMessage}\nSubject: ${newMessage.subject}", "text/plain")
+            try {
+                getTargetFolderForMessage(errorMessage).appendMessages(arrayOf(errorMessage))
                 return true
             } catch (e: Exception) {
                 e.printStackTrace()
