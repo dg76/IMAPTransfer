@@ -1,7 +1,6 @@
 package com.dgunia.imaptransfer
 
 import com.sun.mail.imap.IMAPFolder
-import java.io.IOException
 import java.util.logging.Logger
 import javax.mail.MessagingException
 
@@ -25,7 +24,8 @@ class WatchNoopThread(var imapFolder: IMAPFolder, val reconnect: () -> IMAPFolde
                 Logger.getGlobal().warning("Unexpected IMAP IDLE exception " + e.localizedMessage)
 
                 imapFolder = reconnect()
-            } catch (e: IOException) {
+            } catch (e: Exception) {
+                Logger.getGlobal().warning("NOOP thread exception " + e.localizedMessage)
                 e.printStackTrace()
 
                 Thread.sleep(1 * 60 * 1000) // wait a minute then try to connect again
