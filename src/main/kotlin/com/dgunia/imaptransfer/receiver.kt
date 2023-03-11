@@ -32,8 +32,8 @@ abstract class MessagesReceiver {
         // ggf. anderen Zielordner nehmen
         filter?.forEach {
             if (it.subject == null || newMessage.subject?.matches(Regex(it.subject!!)) == true) {
-                if (it.sender == null || newMessage.from.any { sender -> sender.toString().matches(Regex(it.sender!!)) }) {
-                    if (it.receiver == null || newMessage.allRecipients.any { recipient -> recipient.toString().matches(Regex(it.receiver!!)) }) {
+                if (it.sender == null || newMessage.from?.any { sender -> sender.toString().matches(Regex(it.sender!!)) } == true) {
+                    if (it.receiver == null || newMessage.allRecipients?.any { recipient -> recipient.toString().matches(Regex(it.receiver!!)) } == true) {
                         targetFolder = it.folder!!
                     }
                 }
