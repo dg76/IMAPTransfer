@@ -54,7 +54,8 @@ is not an official mailserver for the domain mail1.com . This will result
 in an error message being sent back to mail1.com telling him that the
 email could not be delivered.
 
-The solution is to use IMAP to forward the email, e.g. using this IMAPTransfer program.
+One solution is to use [Sender Rewriting Scheme (SRS)](https://en.wikipedia.org/wiki/Sender_Rewriting_Scheme) on the mail server that forwards your emails. However not all hosters support that. 
+Another solution is to use IMAP to forward the email, e.g. using this IMAPTransfer program.
 
 Please be aware that only the spam filter of my1.mailserver.com will be used. When
 forwarding the email via SMTP also the spam filter of my2.mailserver.com would be used but
