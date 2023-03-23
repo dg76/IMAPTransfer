@@ -6,6 +6,7 @@ import java.io.*
 import java.util.logging.Logger
 import java.util.zip.GZIPOutputStream
 import javax.mail.*
+import javax.mail.internet.AddressException
 import javax.mail.internet.MimeMessage
 
 /**
@@ -30,14 +31,19 @@ abstract class MessagesReceiver {
         var targetFolder = config.folder!!
 
         // ggf. anderen Zielordner nehmen
-        filter?.forEach {
-            if (it.subject == null || newMessage.subject?.matches(Regex(it.subject!!)) == true) {
-                if (it.sender == null || newMessage.from?.any { sender -> sender.toString().matches(Regex(it.sender!!)) } == true) {
-                    if (it.receiver == null || newMessage.allRecipients?.any { recipient -> recipient.toString().matches(Regex(it.receiver!!)) } == true) {
-                        targetFolder = it.folder!!
+        try {
+            filter?.forEach {
+                if (it.subject == null || newMessage.subject?.matches(Regex(it.subject!!)) == true) {
+                    if (it.sender == null || newMessage.from?.any { sender -> sender.toString().matches(Regex(it.sender!!)) } == true) {
+                        if (it.receiver == null || newMessage.allRecipients?.any { recipient -> recipient.toString().matches(Regex(it.receiver!!)) } == true) {
+                            targetFolder = it.folder!!
+                        }
                     }
                 }
             }
+        } catch (e: AddressException) {
+            e.printStackTrace();
+            // Filter cannot be applied due to an incorrect address in that email.
         }
         return targetFolder
     }
