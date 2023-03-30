@@ -118,7 +118,18 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
 
         // Install Thread that runs NOOP every five minutes to keep the connection open.
         val watchNoopThread = WatchNoopThread(inbox) {
-            connectImapFolder()
+            // This function is called when the NOOP thread detects a problem with the
+            // IMAP connection and requests a new IMAP connection. The new IMAP connection
+            // also needs to sync missed messages and needs to watch for new messages.
+            val folder: IMAPFolder = connectImapFolder()
+
+            // Sync existing messages
+            syncExisting()
+
+            // Watch for future messages
+            runImapWatcher()
+
+            folder
         }
         Thread(watchNoopThread, "IMAPConnectionKeepAlive").start()
 
