@@ -68,7 +68,7 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
 
         do {
             // ggf. erst alte Verbindung beenden
-            inbox?.close()
+            if (inbox?.isOpen == true) inbox?.close()
             inbox = null
             store?.close()
             store = null
@@ -96,7 +96,8 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
             for (uid in lastsynceduid + 1 until nextuid) {
                 inbox!!.getMessageByUID(uid)?.let { message ->
                     if (!message.flags.contains(Flags.Flag.DELETED)) {
-                        if (messagesReceiver.saveMessage(uid, message) && move) {
+                        val savedSuccessfully = messagesReceiver.saveMessage(uid, message)
+                        if (savedSuccessfully && move) {
                             Logger.getGlobal().info("Deleting message \"${message.subject}\"")
                             message.setFlag(Flags.Flag.DELETED, true)
                             inbox!!.expunge(arrayOf(message))
@@ -111,20 +112,22 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
     }
 
     fun runImapWatcher() {
+        val inbox = inbox!!
         // Install listener to automatically copy new messages to the target server
-        inbox!!.addMessageCountListener(object : MessageCountAdapter() {
+        inbox.addMessageCountListener(object : MessageCountAdapter() {
             override fun messagesAdded(e: MessageCountEvent?) {
                 super.messagesAdded(e)
 
                 // Copy the new messages to the target server
                 e?.messages?.forEach { message ->
-                    syncExisting(inbox!!.getUID(message) + 1)
+                    syncExisting(inbox.getUID(message) + 1)
                 }
             }
         })
 
         // Install Thread that runs NOOP every five minutes to keep the connection open.
-        val watchNoopThread = WatchNoopThread(inbox!!) {
+        var runIdleCommand = true;
+        val watchNoopThread = WatchNoopThread(inbox) {
             // This function is called when the NOOP thread detects a problem with the
             // IMAP connection and requests a new IMAP connection. The new IMAP connection
             // also needs to sync missed messages and needs to watch for new messages.
@@ -136,21 +139,27 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
             // Watch for future messages
             runImapWatcher()
 
+            // Vorherige "idle" Schleife beenden, da runImapWatcher nun eine neue gestartet hat
+            runIdleCommand = false
+
             folder
         }
         Thread(watchNoopThread, "IMAPConnectionKeepAlive").start()
 
         // Wait for new messages
-        Logger.getGlobal().info("Start watching for incoming emails (last email: ${inbox!!.uidNext - 1})")
-        while (true) {
+        Logger.getGlobal().info("Start watching for incoming emails (last email: ${inbox.uidNext - 1})")
+        while (runIdleCommand && inbox.isOpen) {
             try {
-                inbox!!.idle()
+                Logger.getGlobal().warning("IDLE command");
+                inbox.idle()
             } catch (e: FolderClosedException) {
                 e.printStackTrace()
+                Thread.sleep(10 * 1000) // 10 Sekunden warten, dann erneut versuchen
                 connect()
                 syncExisting()
             } catch (e: IllegalStateException) {
                 e.printStackTrace()
+                Thread.sleep(10 * 1000) // 10 Sekunden warten, dann erneut versuchen
                 connect()
                 syncExisting()
             } catch (e: IOException) {
@@ -160,6 +169,8 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
                 syncExisting()
             }
         }
+
+        Logger.getGlobal().warning("runImapWatcher exit");
     }
 }
 

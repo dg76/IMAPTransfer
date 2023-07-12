@@ -11,7 +11,7 @@ import javax.mail.MessagingException
  */
 class WatchNoopThread(var imapFolder: IMAPFolder, val reconnect: () -> IMAPFolder) : Runnable {
     override fun run() {
-        var lastReconnect = Date();
+        val lastReconnect = Date();
         while (!Thread.interrupted()) {
             try {
                 Thread.sleep(5 * 60 * 1000)
@@ -21,13 +21,13 @@ class WatchNoopThread(var imapFolder: IMAPFolder, val reconnect: () -> IMAPFolde
                     p.simpleCommand("NOOP", null)
                     null
                 }
-                Logger.getGlobal().warning("NOOP idle command");
+                Logger.getGlobal().warning("NOOP command");
 
                 // Jede Stunde einmal neu verbinden
                 if (lastReconnect.toInstant().plus(Duration.ofHours(1)).isAfter(Date().toInstant())) {
                     Logger.getGlobal().warning("Reconnect source after an hour");
-                    lastReconnect = Date()
                     imapFolder = reconnect()
+                    return
                 }
             } catch (e: InterruptedException) {
                 break
