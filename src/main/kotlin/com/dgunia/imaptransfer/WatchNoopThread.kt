@@ -26,6 +26,7 @@ class WatchNoopThread(var imapFolder: IMAPFolder, val reconnect: () -> IMAPFolde
                 // Jede Stunde einmal neu verbinden
                 if (lastReconnect.toInstant().plus(Duration.ofHours(1)).isAfter(Date().toInstant())) {
                     Logger.getGlobal().warning("Reconnect source after an hour");
+                    imapFolder.close()
                     imapFolder = reconnect()
                     return
                 }

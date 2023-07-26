@@ -112,6 +112,8 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
     }
 
     fun runImapWatcher() {
+        Logger.getGlobal().info("runImapWatcher start")
+
         val inbox = inbox!!
         // Install listener to automatically copy new messages to the target server
         inbox.addMessageCountListener(object : MessageCountAdapter() {
@@ -128,6 +130,9 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
         // Install Thread that runs NOOP every five minutes to keep the connection open.
         var runIdleCommand = true;
         val watchNoopThread = WatchNoopThread(inbox) {
+            // Vorherige "idle" Schleife beenden, da runImapWatcher nun eine neue gestartet hat
+            runIdleCommand = false
+
             // This function is called when the NOOP thread detects a problem with the
             // IMAP connection and requests a new IMAP connection. The new IMAP connection
             // also needs to sync missed messages and needs to watch for new messages.
@@ -139,9 +144,6 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
             // Watch for future messages
             runImapWatcher()
 
-            // Vorherige "idle" Schleife beenden, da runImapWatcher nun eine neue gestartet hat
-            runIdleCommand = false
-
             folder
         }
         Thread(watchNoopThread, "IMAPConnectionKeepAlive").start()
@@ -151,7 +153,11 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
         while (runIdleCommand && inbox.isOpen) {
             try {
                 Logger.getGlobal().warning("IDLE command");
+                var t = System.currentTimeMillis()
                 inbox.idle()
+                if (System.currentTimeMillis() - t < 1000) {
+                    Thread.sleep(1000) // Maximal ein IDLE pro Sekunde
+                }
             } catch (e: FolderClosedException) {
                 e.printStackTrace()
                 Thread.sleep(10 * 1000) // 10 Sekunden warten, dann erneut versuchen
