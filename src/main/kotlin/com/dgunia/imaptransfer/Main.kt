@@ -5,14 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.apache.commons.cli.*
 import java.io.File
-import java.util.logging.Logger
 
 val ARG_HELP = "help"
 val ARG_YAML = "config"
 
 fun main(args: Array<String>) {
-    Logger.getGlobal().info("Version 2023-07-09")
-
     // Shorter log output
     System.setProperty("java.util.logging.SimpleFormatter.format", "[%1\$tF %1\$tT] [%4$-7s] %5\$s %n")
 

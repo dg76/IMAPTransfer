@@ -68,13 +68,13 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
 
         do {
             try {
-                // ggf. erst alte Verbindung beenden
+                // Stop the old connection if necessary
                 if (inbox?.isOpen == true) inbox?.close()
                 inbox = null
                 store?.close()
                 store = null
 
-                // Neue Verbindung aufbauen
+                // Create a new connection
                 Thread.sleep(5000)
                 Logger.getGlobal().info("Connecting to source ${config.user}@${config.server}:${port}/${config.folder}")
 
@@ -133,7 +133,7 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
         // Install Thread that runs NOOP every five minutes to keep the connection open.
         var runIdleCommand = true;
         val watchNoopThread = WatchNoopThread(inbox) {
-            // Vorherige "idle" Schleife beenden, da runImapWatcher nun eine neue gestartet hat
+            // Stop the previous "idle" loop, because runImapWatcher has started a new one now
             runIdleCommand = false
 
             // This function is called when the NOOP thread detects a problem with the
@@ -159,21 +159,21 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
                 var t = System.currentTimeMillis()
                 inbox.idle()
                 if (System.currentTimeMillis() - t < 1000) {
-                    Thread.sleep(1000) // Maximal ein IDLE pro Sekunde
+                    Thread.sleep(1000) // Up to one IDLE per second
                 }
             } catch (e: FolderClosedException) {
                 e.printStackTrace()
-                Thread.sleep(10 * 1000) // 10 Sekunden warten, dann erneut versuchen
+                Thread.sleep(10 * 1000) // Wait 10 seconds, then try again
                 connect()
                 syncExisting()
             } catch (e: IllegalStateException) {
                 e.printStackTrace()
-                Thread.sleep(10 * 1000) // 10 Sekunden warten, dann erneut versuchen
+                Thread.sleep(10 * 1000) // Wait 10 seconds, then try again
                 connect()
                 syncExisting()
             } catch (e: IOException) {
                 e.printStackTrace()
-                Thread.sleep(10 * 1000) // 10 Sekunden warten, dann erneut versuchen
+                Thread.sleep(10 * 1000) // Wait 10 seconds, then try again
                 connect()
                 syncExisting()
             }
