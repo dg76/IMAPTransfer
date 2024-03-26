@@ -119,16 +119,7 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
 
         val inbox = inbox!!
         // Install listener to automatically copy new messages to the target server
-        inbox.addMessageCountListener(object : MessageCountAdapter() {
-            override fun messagesAdded(e: MessageCountEvent?) {
-                super.messagesAdded(e)
-
-                // Copy the new messages to the target server
-                e?.messages?.forEach { message ->
-                    syncExisting(inbox.getUID(message) + 1)
-                }
-            }
-        })
+        addListener(inbox)
 
         // Install Thread that runs NOOP every five minutes to keep the connection open.
         var runIdleCommand = true;
@@ -166,20 +157,36 @@ class ImapProvider(val config: ImapConfig, val move: Boolean = false, val syncMo
                 Thread.sleep(10 * 1000) // Wait 10 seconds, then try again
                 connect()
                 syncExisting()
+                addListener(this.inbox!!)
             } catch (e: IllegalStateException) {
                 e.printStackTrace()
                 Thread.sleep(10 * 1000) // Wait 10 seconds, then try again
                 connect()
                 syncExisting()
+                addListener(this.inbox!!)
             } catch (e: IOException) {
                 e.printStackTrace()
                 Thread.sleep(10 * 1000) // Wait 10 seconds, then try again
                 connect()
                 syncExisting()
+                addListener(this.inbox!!)
             }
         }
 
         Logger.getGlobal().warning("runImapWatcher exit");
+    }
+
+    private fun addListener(inbox: IMAPFolder) {
+        inbox.addMessageCountListener(object : MessageCountAdapter() {
+            override fun messagesAdded(e: MessageCountEvent?) {
+                super.messagesAdded(e)
+
+                // Copy the new messages to the target server
+                e?.messages?.forEach { message ->
+                    syncExisting(inbox.getUID(message) + 1)
+                }
+            }
+        })
     }
 }
 
