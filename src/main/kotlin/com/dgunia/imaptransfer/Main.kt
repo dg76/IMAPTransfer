@@ -31,7 +31,8 @@ fun main(args: Array<String>) {
             val objectMapper = ObjectMapper(YAMLFactory()).apply {
                 disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
             }
-            val yaml = objectMapper.readValue(File(cmd.getOptionValue(ARG_YAML)), YamlConfigFile::class.java)
+            val yamlFile = File(cmd.getOptionValue(ARG_YAML))
+            val yaml = objectMapper.readValue(yamlFile, YamlConfigFile::class.java)
 
             // Create the source messages provider
             val source: MessagesProvider
@@ -45,6 +46,20 @@ fun main(args: Array<String>) {
             val target: MessagesReceiver
             if (yaml.target?.path != null) {
                 target = LocalFolderReceiver(config = yaml.target!!, yaml.filter)
+            } else if (yaml.target?.autoresponder_file != null) {
+                val yamltarget = yaml.target!!
+                target = AutoResponderReceiver(
+                    autoresponderFile = File(yamlFile.parentFile, yamltarget.autoresponder_file!!),
+                    ignoreFrom = yamltarget.ignore_from ?: "",
+                    from = yamltarget.from ?: "",
+                    to = yamltarget.to ?: "",
+                    bcc = yamltarget.bcc ?: "",
+                    defaultSubject = yamltarget.default_subject ?: "",
+                    smtpHost = yamltarget.smtp_host ?: "",
+                    smtpPort = yamltarget.smtp_port ?: 587,
+                    smtpUser = yamltarget.smtp_user ?: "",
+                    smtpPassword = yamltarget.smtp_password ?: ""
+                )
             } else {
                 target = ImapReceiver(config = yaml.target!!, yaml.filter)
             }

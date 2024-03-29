@@ -10,7 +10,7 @@ class YamlConfigFile {
     var source: ImapConfig? = null
 
     @JsonProperty
-    var target: ImapConfig? = null
+    var target: TargetConfig? = null
 
     @JsonProperty
     var options: ImapOptions? = null
@@ -22,7 +22,7 @@ class YamlConfigFile {
 /**
  * Configuration of an IMAP server (server, port, user, password, folder, [uidfile]) or a local folder (path, folder, compress, [uidfile])
  */
-class ImapConfig() {
+open class ImapConfig() {
     @JsonProperty
     var server: String? = null
 
@@ -46,6 +46,38 @@ class ImapConfig() {
 
     @JsonProperty
     var compress: Boolean? = null
+}
+
+class TargetConfig : ImapConfig() {
+    @JsonProperty
+    var autoresponder_file: String? = null
+
+    @JsonProperty
+    var ignore_from: String? = null
+
+    @JsonProperty
+    var from: String? = null
+
+    @JsonProperty
+    var to: String? = null
+
+    @JsonProperty
+    var bcc: String? = null
+
+    @JsonProperty
+    var default_subject: String? = null
+
+    @JsonProperty
+    var smtp_host: String? = null
+
+    @JsonProperty
+    var smtp_port: Int? = null
+
+    @JsonProperty
+    var smtp_user: String? = null
+
+    @JsonProperty
+    var smtp_password: String? = null
 }
 
 /**

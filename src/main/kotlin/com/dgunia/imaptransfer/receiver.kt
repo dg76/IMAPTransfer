@@ -7,6 +7,7 @@ import java.util.logging.Logger
 import java.util.zip.GZIPOutputStream
 import javax.mail.*
 import javax.mail.internet.AddressException
+import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 
 /**
@@ -180,5 +181,81 @@ class LocalFolderReceiver(val config: ImapConfig, val filter: List<ImapFilter>?)
         fileOutputStream.close()
         Logger.getGlobal().info("Writing \"${message.subject}\" into file \"${outputFile.path}\"")
         return true
+    }
+}
+
+/**
+ * When receiving a matching email, an automatic response is sent back.
+ */
+class AutoResponderReceiver(val autoresponderFile: File, val ignoreFrom: String, val from: String, val to: String, val bcc: String, val defaultSubject: String, val smtpHost: String, val smtpPort: Int, val smtpUser: String, val smtpPassword: String) : MessagesReceiver() {
+    override fun connect() {
+    }
+
+    override fun saveMessage(uid: Long, message: Message): Boolean {
+        if (message.from.first().toString() == ignoreFrom) return true
+
+        val toRecipients = message.getRecipients(Message.RecipientType.TO)
+        val shouldRespond = toRecipients?.any { address ->
+            address.toString().contains(to, ignoreCase = true)
+        } ?: false
+
+        if (!shouldRespond) {
+            println("The email is not addressed to $to. No response will be sent.")
+            return true
+        }
+
+        val inReplyToHeader = message.getHeader("In-Reply-To")
+
+        if (inReplyToHeader != null && inReplyToHeader.isNotEmpty()) {
+            println("This message is a reply.")
+            return true
+        }
+
+        try {
+            // Define sender's email credentials and SMTP server details
+            val smtpHost = this.smtpHost // SMTP Host
+            val smtpPort = this.smtpPort // SMTP Port
+            val username = this.smtpUser // Your email
+            val password = this.smtpPassword // Your email password
+
+            // Set properties for the SMTP server
+            val properties = System.getProperties().apply {
+                put("mail.smtp.host", smtpHost)
+                put("mail.smtp.port", smtpPort)
+                put("mail.smtp.auth", "true")
+                put("mail.smtp.starttls.enable", "true") // Enable STARTTLS
+            }
+
+            // Authenticate to the SMTP server
+            val session = Session.getInstance(properties, object : Authenticator() {
+                override fun getPasswordAuthentication(): PasswordAuthentication {
+                    return PasswordAuthentication(username, password)
+                }
+            })
+
+            // Create a reply message using the session
+            val mailFrom = from
+            val reply = MimeMessage(session).apply {
+                setFrom(InternetAddress(mailFrom))
+                setRecipients(Message.RecipientType.TO, InternetAddress.parse(message.from.first().toString()))
+                setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc))
+
+                // Add the In-Reply-To header using the original message's Message-ID
+                message.getHeader("Message-ID")?.firstOrNull()?.let {
+                    addHeader("In-Reply-To", it)
+                }
+
+                subject = "Re: ${message.subject ?: defaultSubject}"
+                setText(autoresponderFile.readText())
+            }
+
+            // Send the message
+            Transport.send(reply)
+            println("Response sent successfully to ${message.from.first()}.")
+            return true
+        } catch (e: MessagingException) {
+            e.printStackTrace()
+            return false
+        }
     }
 }
